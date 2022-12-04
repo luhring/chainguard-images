@@ -10,7 +10,6 @@ fi
 
 docker run --rm --entrypoint bash "${IMAGE_NAME}" -xc \
     'export PATH="/root/go/bin:${PATH}" && \
-     which goimports &&
      tree --version &&
      go version &&
      make --version &&
