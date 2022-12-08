@@ -1,11 +1,11 @@
 on:
   push:
     branches:
-      - main
+      - tag-last
   schedule:
     - cron: '0 0 * * *'
   workflow_dispatch: {}
-concurrency: release
+concurrency: tag-last
 jobs:
   generate-matrix:
     runs-on: ubuntu-latest
@@ -15,19 +15,19 @@ jobs:
     - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
     # For nightly builds, build every image
     - id: generate-matrix-schedule
-      if: ${{ github.event_name == 'schedule' }}
+      # if: ${{ github.event_name == 'schedule' }}
       uses: ./.github/actions/generate-matrix
     # On push to main branch, only build images necessary
-    - id: files
-      if: ${{ github.event_name != 'schedule' }}
-      uses: jitterbit/get-changed-files@b17fbb00bdc0c0f63fcf166580804b4d2cdc2a42 # v1
-      with:
-        format: csv
-    - id: generate-matrix-main
-      if: ${{ github.event_name != 'schedule' }}
-      uses: ./.github/actions/generate-matrix
-      with:
-        modified-files: ${{ steps.files.outputs.all }}
+    # - id: files
+    #   if: ${{ github.event_name != 'schedule' }}
+    #   uses: jitterbit/get-changed-files@b17fbb00bdc0c0f63fcf166580804b4d2cdc2a42 # v1
+    #   with:
+    #     format: csv
+    # - id: generate-matrix-main
+    #   if: ${{ github.event_name != 'schedule' }}
+    #   uses: ./.github/actions/generate-matrix
+    #   with:
+    #     modified-files: ${{ steps.files.outputs.all }}
     - id: generate-matrix
       run: |
         set -x
@@ -69,6 +69,8 @@ jobs:
           done
           echo "release-image-inputs=$(cat inputs.json | tr -d '\n')" >> $GITHUB_OUTPUT
       - uses: ./.github/actions/release-image
+        if: ${{ matrix.imageName == 'postgres' }}
         with: ${{ fromJSON(steps.release-image-inputs.outputs.release-image-inputs) }}
       - uses: ./.github/actions/policy-check-image
+        if: ${{ matrix.imageName == 'postgres' }}
         with: ${{ fromJSON(steps.release-image-inputs.outputs.release-image-inputs) }}
